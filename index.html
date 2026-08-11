@@ -534,50 +534,75 @@
           "</div></div>"
         );
       }
+      function matches(d, q, includeCategory) {
+        if (includeCategory && F.cat && d.cat != F.cat) return false;
+        if (F.mich.size) {
+          if (!d.m || !F.mich.has(d.m)) return false;
+        }
+        if (F.g && !d.g) return false;
+        if (F.pk && !d.pk) return false;
+        if (F.hot && !d.hot) return false;
+        if (F.om && !d.om) return false;
+        if (F.hist && !d.hist) return false;
+        if (F.ahist && !d.ahist) return false;
+        if (F.aw.size) {
+          if (!d.aw || !F.aw.has(d.aw)) return false;
+        }
+        if (F.bk.size) {
+          if (!d.bk || !F.bk.has(d.bk)) return false;
+        }
+        if (F.nd.size) {
+          if (!d.nd || !F.nd.has(d.nd)) return false;
+        }
+        if (F.km && (d.km == null || d.km > F.km)) return false;
+        if (q) {
+          var h = (
+            d.n +
+            " " +
+            d.cat +
+            " " +
+            d.hy +
+            " " +
+            d.i +
+            " " +
+            d.pkf +
+            " " +
+            d.mh +
+            " " +
+            d.ah +
+            " " +
+            d.al
+          ).toLowerCase();
+          if (h.indexOf(q) < 0) return false;
+        }
+        return true;
+      }
+      function updateCategories(q) {
+        var available = new Set(
+          DATA.filter(function (d) {
+            return matches(d, q, false);
+          }).map(function (d) {
+            return d.cat;
+          }),
+        );
+        if (F.cat && !available.has(F.cat)) F.cat = "";
+        var select = document.getElementById("cat");
+        select.innerHTML =
+          '<option value="">全部分類</option>' +
+          CATS.filter(function (cat) {
+            return available.has(cat);
+          })
+            .map(function (cat) {
+              return '<option value="' + cat + '">' + cat + "</option>";
+            })
+            .join("");
+        select.value = F.cat;
+      }
       function apply() {
         var q = document.getElementById("q").value.trim().toLowerCase();
+        updateCategories(q);
         var r = DATA.filter(function (d) {
-          if (F.cat && d.cat != F.cat) return false;
-          if (F.mich.size) {
-            if (!d.m || !F.mich.has(d.m)) return false;
-          }
-          if (F.g && !d.g) return false;
-          if (F.pk && !d.pk) return false;
-          if (F.hot && !d.hot) return false;
-          if (F.om && !d.om) return false;
-          if (F.hist && !d.hist) return false;
-          if (F.ahist && !d.ahist) return false;
-          if (F.aw.size) {
-            if (!d.aw || !F.aw.has(d.aw)) return false;
-          }
-          if (F.bk.size) {
-            if (!d.bk || !F.bk.has(d.bk)) return false;
-          }
-          if (F.nd.size) {
-            if (!d.nd || !F.nd.has(d.nd)) return false;
-          }
-          if (F.km && (d.km == null || d.km > F.km)) return false;
-          if (q) {
-            var h = (
-              d.n +
-              " " +
-              d.cat +
-              " " +
-              d.hy +
-              " " +
-              d.i +
-              " " +
-              d.pkf +
-              " " +
-              d.mh +
-              " " +
-              d.ah +
-              " " +
-              d.al
-            ).toLowerCase();
-            if (h.indexOf(q) < 0) return false;
-          }
-          return true;
+          return matches(d, q, true);
         });
         if (F.sort == "km")
           r.sort(function (a, b) {

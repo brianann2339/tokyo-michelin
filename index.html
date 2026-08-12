@@ -72,9 +72,22 @@
         color: #fff;
         border-color: #8b0000;
       }
+      .chip.on.all {
+        background: #4b0000;
+        border-color: #4b0000;
+      }
+      .taghint {
+        color: #777;
+        font-size: 11.5px;
+        margin: 0 2px 8px;
+      }
       .chip.g.on {
         background: #2e7d32;
         border-color: #2e7d32;
+      }
+      .chip.g.on.all {
+        background: #17451a;
+        border-color: #17451a;
       }
       .chip.d.on {
         background: #1565c0;
@@ -84,15 +97,27 @@
         background: #6a1b9a;
         border-color: #6a1b9a;
       }
+      .chip.bk.on.all {
+        background: #380c54;
+        border-color: #380c54;
+      }
       .chip.pk2.on {
         background: #0a7d5a;
         color: #fff;
         border-color: #0a7d5a;
       }
+      .chip.pk2.on.all {
+        background: #04442f;
+        border-color: #04442f;
+      }
       .chip.nd.on {
         background: #7b1010;
         color: #fff;
         border-color: #7b1010;
+      }
+      .chip.nd.on.all {
+        background: #410606;
+        border-color: #410606;
       }
       select {
         padding: 7px 10px;
@@ -192,20 +217,36 @@
         color: #fff;
         border-color: #7b4397;
       }
+      .chip.om2.on.all {
+        background: #452252;
+        border-color: #452252;
+      }
       .chip.hot2.on {
         background: #d1451b;
         color: #fff;
         border-color: #d1451b;
+      }
+      .chip.hot2.on.all {
+        background: #7b220a;
+        border-color: #7b220a;
       }
       .chip.hist2.on {
         background: #69523a;
         color: #fff;
         border-color: #69523a;
       }
+      .chip.hist2.on.all {
+        background: #39291c;
+        border-color: #39291c;
+      }
       .chip.awardhist2.on {
         background: #9a6a00;
         color: #fff;
         border-color: #9a6a00;
+      }
+      .chip.awardhist2.on.all {
+        background: #573b00;
+        border-color: #573b00;
       }
       .b.hist {
         background: #efe4d5;
@@ -323,6 +364,7 @@
         </button>
       </div>
       <input id="q" placeholder="🔍 搜尋店名・分類・類別…" />
+      <div class="taghint">按 1 次＝聯集｜按 2 次＝交集｜按 3 次＝取消</div>
       <div class="bar">
         <span class="lb">分類</span
         ><select id="cat">
@@ -467,17 +509,8 @@
       };
       var F = {
         cat: "",
-        mich: new Set(),
-        g: false,
-        aw: new Set(),
         km: 0,
-        bk: new Set(),
-        pk: false,
-        hot: false,
-        om: false,
-        hist: false,
-        ahist: false,
-        nd: new Set(),
+        tags: new Map(),
         sort: "km",
       };
       function esc(s) {
@@ -548,26 +581,31 @@
           "</div></div>"
         );
       }
+      function tagKey(k, v) {
+        return k + "\t" + v;
+      }
+      function matchTag(d, k, v) {
+        if (k == "mich") return d.m == v;
+        if (k == "aw" || k == "bk" || k == "nd") return d[k] == v;
+        return !!d[k];
+      }
+      function matchTags(d) {
+        var all = true,
+          any = false,
+          hasAny = false;
+        F.tags.forEach(function (t) {
+          var ok = matchTag(d, t.k, t.v);
+          if (t.s == 2) all = all && ok;
+          else {
+            hasAny = true;
+            any = any || ok;
+          }
+        });
+        return all && (!hasAny || any);
+      }
       function matches(d, q, includeCategory) {
         if (includeCategory && F.cat && d.cat != F.cat) return false;
-        if (F.mich.size) {
-          if (!d.m || !F.mich.has(d.m)) return false;
-        }
-        if (F.g && !d.g) return false;
-        if (F.pk && !d.pk) return false;
-        if (F.hot && !d.hot) return false;
-        if (F.om && !d.om) return false;
-        if (F.hist && !d.hist) return false;
-        if (F.ahist && !d.ahist) return false;
-        if (F.aw.size) {
-          if (!d.aw || !F.aw.has(d.aw)) return false;
-        }
-        if (F.bk.size) {
-          if (!d.bk || !F.bk.has(d.bk)) return false;
-        }
-        if (F.nd.size) {
-          if (!d.nd || !F.nd.has(d.nd)) return false;
-        }
+        if (!matchTags(d)) return false;
         if (F.km && (d.km == null || d.km > F.km)) return false;
         if (q) {
           var h = (
@@ -639,22 +677,17 @@
         document.getElementById("cnt").textContent =
           "共 " + r.length + " 家" + (F.km ? "（" + F.km + "km內）" : "");
         document.getElementById("grid").innerHTML = r
-          .slice(0, F.hist || F.ahist ? r.length : 700)
+          .slice(
+            0,
+            F.tags.has(tagKey("hist", 0)) || F.tags.has(tagKey("ahist", 0))
+              ? r.length
+              : 700,
+          )
           .map(card)
           .join("");
       }
       function tog(k, v, el) {
-        if (
-          k == "g" ||
-          k == "pk" ||
-          k == "hot" ||
-          k == "om" ||
-          k == "hist" ||
-          k == "ahist"
-        ) {
-          F[k] = !F[k];
-          el.classList.toggle("on");
-        } else if (k == "km") {
+        if (k == "km") {
           if (F.km == v) {
             F.km = 0;
             el.classList.remove("on");
@@ -666,13 +699,13 @@
             el.classList.add("on");
           }
         } else {
-          if (F[k].has(v)) {
-            F[k].delete(v);
-            el.classList.remove("on");
-          } else {
-            F[k].add(v);
-            el.classList.add("on");
-          }
+          var key = tagKey(k, v),
+            old = F.tags.get(key),
+            state = old ? old.s + 1 : 1;
+          if (state == 3) F.tags.delete(key);
+          else F.tags.set(key, { k: k, v: v, s: state });
+          el.classList.toggle("on", state < 3);
+          el.classList.toggle("all", state == 2);
         }
         apply();
       }

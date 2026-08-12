@@ -1045,29 +1045,29 @@
       function initHits() {
         var el = document.getElementById("hitn"),
           wrap = document.getElementById("hits");
-        var KEY = "tokyo-michelin-brianann2339";
+        var base =
+          "https://api.counterapi.dev/v2/tokyo-michelin/tokyo-michelin-visits";
         var today = new Date().toISOString().slice(0, 10);
-        var last = localStorage.getItem("hit_day");
+        var last = localStorage.getItem("hit_day_v2");
         var uniq = last !== today;
-        var url =
-          "https://api.counterapi.dev/v1/" +
-          KEY +
-          "/" +
-          (uniq ? "visits/up" : "visits/");
-        fetch(url)
+        var url = base + (uniq ? "/up" : "") + "?t=" + Date.now();
+        fetch(url, { cache: "no-store" })
           .then(function (r) {
+            if (!r.ok) throw new Error("CounterAPI " + r.status);
             return r.json();
           })
           .then(function (j) {
+            var d = j && j.data;
             var n =
-              j &&
-              (j.count != null ? j.count : j.value != null ? j.value : null);
+              d && d.up_count != null
+                ? Number(d.up_count) - Number(d.down_count || 0)
+                : null;
             if (n == null) {
               wrap.style.display = "none";
               return;
             }
             el.textContent = Number(n).toLocaleString();
-            if (uniq) localStorage.setItem("hit_day", today);
+            if (uniq) localStorage.setItem("hit_day_v2", today);
             document.getElementById("hitt").textContent = uniq
               ? "（歡迎回來！今日已計入）"
               : "";

@@ -177,6 +177,19 @@
         font-weight: 700;
         margin-bottom: 2px;
       }
+      .sus-flag {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 6px;
+        border-radius: 5px;
+        background: #b71c1c;
+        color: #fff;
+        font-size: 10.5px;
+        font-weight: 700;
+        line-height: 1.25;
+        vertical-align: 2px;
+        white-space: nowrap;
+      }
       .km {
         float: right;
         font-size: 12px;
@@ -801,6 +814,7 @@
           km +
           '<div class="nm">' +
           esc(d.n) +
+          (d.sus ? '<span class="sus-flag">疑似休業</span>' : "") +
           '</div><div class="badges">' +
           b +
           "</div>" +
